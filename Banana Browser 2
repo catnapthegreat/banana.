@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>banana. browser.</title>
+    <link rel="icon" type="image/png" href="https://files.catbox.moe/nu8kzb.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #09090b;
+            color: #fafafa;
+            overflow: hidden;
+            text-transform: lowercase;
+        }
+
+        .glass {
+            background: rgba(24, 24, 27, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tab-active {
+            background: rgba(39, 39, 42, 1);
+            border-bottom: 2px solid #facc15;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: white;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #09090b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #27272a;
+            border-radius: 10px;
+        }
+
+        .loading-bar {
+            height: 2px;
+            background: #facc15;
+            width: 0%;
+            transition: width 0.3s ease;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+        }
+
+        @keyframes wave {
+            0% { transform: scaleY(1); }
+            50% { transform: scaleY(1.5); }
+            100% { transform: scaleY(1); }
+        }
+
+        .bar {
+            width: 3px;
+            height: 15px;
+            background: #facc15;
+            margin: 0 1px;
+            animation: wave 1s ease-in-out infinite;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        .logo-img {
+            height: 32px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .home-logo-img {
+            height: 120px;
+            width: auto;
+            object-fit: contain;
+        }
+    </style>
+</head>
+
+<body class="h-screen flex flex-col">
+
+    <!-- top. navigation. bar. -->
+    <header class="glass p-2 flex flex-col gap-2 z-50 relative">
+        <div class="flex items-center gap-4 px-2">
+            <div class="flex items-center gap-2 mr-4">
+                <img src="https://files.catbox.moe/swgn68.png" alt="banana. logo." class="logo-img">
+            </div>
+
+            <div class="flex gap-1 overflow-x-auto no-scrollbar flex-1" id="tabs-container">
+                <!-- tabs. injected. here. -->
+            </div>
+
+            <button onclick="createNewTab()" class="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400 transition-all">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+
+        <div class="flex items-center gap-3 px-2 pb-1">
+            <div class="flex gap-2">
+                <button onclick="goBack()" class="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400 transition-all"><i class="fas fa-arrow-left"></i></button>
+                <button onclick="goForward()" class="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400 transition-all"><i class="fas fa-arrow-right"></i></button>
+                <button onclick="reloadTab()" class="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400 transition-all"><i class="fas fa-redo"></i></button>
+            </div>
+
+            <form id="url-form" class="flex-1 flex items-center glass rounded-xl px-4 py-1.5 focus-within:ring-2 focus-within:ring-yellow-400/50 transition-all">
+                <i class="fas fa-lock text-[10px] text-green-500 mr-3"></i>
+                <input type="text" id="url-input" class="bg-transparent border-none outline-none text-sm w-full text-zinc-200" placeholder="search. or. enter. url." autocomplete="off">
+            </form>
+
+            <div class="flex gap-2 relative">
+                <button id="music-toggle" class="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400 transition-all flex items-center justify-center min-w-[36px]">
+                    <i class="fas fa-music" id="music-icon"></i>
+                    <div id="visualizer" class="hidden absolute flex items-center justify-center">
+                        <div class="bar" style="animation-delay: 0.1s"></div>
+                        <div class="bar" style="animation-delay: 0.2s"></div>
+                        <div class="bar" style="animation-delay: 0.3s"></div>
+                    </div>
+                </button>
+                <button onclick="downloadBrowser()" class="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400 transition-all"><i class="fas fa-download"></i></button>
+            </div>
+        </div>
+        <div id="loading-bar" class="loading-bar"></div>
+    </header>
+
+    <main class="flex-1 relative bg-zinc-950" id="browser-viewport">
+        <!-- iframes. injected. here. -->
+        
+        <!-- banana. home. view. -->
+        <div id="home-view" class="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950 z-40">
+            <div class="text-center space-y-8 animate-in fade-in zoom-in duration-700">
+                <div class="flex flex-col items-center">
+                    <img src="https://files.catbox.moe/swgn68.png" alt="banana. logo." class="home-logo-img mb-6 transform hover:scale-105 transition-transform duration-500">
+                    <h1 class="text-4xl font-bold tracking-tight">banana. browser.</h1>
+                    <p class="text-zinc-500 mt-2 font-medium">fast. secure. and. refreshing.</p>
+                </div>
+
+                <form id="home-search-form" class="w-[500px] max-w-full glass p-1 rounded-2xl flex items-center focus-within:ring-4 focus-within:ring-yellow-400/20 transition-all shadow-2xl">
+                    <input type="text" id="home-search-input" placeholder="search. with. google." class="bg-transparent flex-1 px-5 py-3 outline-none text-lg text-zinc-100">
+                    <button type="submit" class="bg-yellow-400 text-zinc-950 p-3 px-6 rounded-xl font-bold hover:bg-yellow-300 transition-all shadow-lg active:scale-95">
+                        search.
+                    </button>
+                </form>
+
+                <div class="flex flex-wrap gap-8 justify-center items-center">
+                    <a href="javascript:void(0)" onclick="navigate('https://www.google.com')" class="group flex flex-col items-center gap-2">
+                        <div class="w-14 h-14 glass rounded-2xl flex items-center justify-center group-hover:bg-zinc-800 group-hover:border-yellow-400/50 transition-all transform group-hover:-translate-y-1">
+                            <i class="fab fa-google text-xl group-hover:text-yellow-400"></i>
+                        </div>
+                        <span class="text-[11px] font-semibold text-zinc-500 group-hover:text-zinc-300">google.</span>
+                    </a>
+                    <a href="javascript:void(0)" onclick="navigate('https://www.youtube.com')" class="group flex flex-col items-center gap-2">
+                        <div class="w-14 h-14 glass rounded-2xl flex items-center justify-center group-hover:bg-zinc-800 group-hover:border-red-500/50 transition-all transform group-hover:-translate-y-1">
+                            <i class="fab fa-youtube text-xl group-hover:text-red-500"></i>
+                        </div>
+                        <span class="text-[11px] font-semibold text-zinc-500 group-hover:text-zinc-300">youtube.</span>
+                    </a>
+                    <a href="javascript:void(0)" onclick="showPage('faq')" class="group flex flex-col items-center gap-2">
+                        <div class="w-14 h-14 glass rounded-2xl flex items-center justify-center group-hover:bg-zinc-800 group-hover:border-yellow-400/50 transition-all transform group-hover:-translate-y-1">
+                            <i class="fas fa-question text-xl group-hover:text-yellow-400"></i>
+                        </div>
+                        <span class="text-[11px] font-semibold text-zinc-500 group-hover:text-zinc-300">faq.banana.</span>
+                    </a>
+                    <a href="javascript:void(0)" onclick="showPage('help')" class="group flex flex-col items-center gap-2">
+                        <div class="w-14 h-14 glass rounded-2xl flex items-center justify-center group-hover:bg-zinc-800 group-hover:border-green-400/50 transition-all transform group-hover:-translate-y-1">
+                            <i class="fas fa-info text-xl group-hover:text-green-400"></i>
+                        </div>
+                        <span class="text-[11px] font-semibold text-zinc-500 group-hover:text-zinc-300">help.banana.</span>
+                    </a>
+                    <a href="javascript:void(0)" onclick="showPage('terms')" class="group flex flex-col items-center gap-2">
+                        <div class="w-14 h-14 glass rounded-2xl flex items-center justify-center group-hover:bg-zinc-800 group-hover:border-blue-400/50 transition-all transform group-hover:-translate-y-1">
+                            <i class="fas fa-file-alt text-xl group-hover:text-blue-400"></i>
+                        </div>
+                        <span class="text-[11px] font-semibold text-zinc-500 group-hover:text-zinc-300">terms.banana.</span>
+                    </a>
+                </div>
+
+                <!-- mandatory. credit. -->
+                <div class="pt-12">
+                    <a href="https://github.com/catnapthegreat" target="_blank" class="text-[10px] text-zinc-600 hover:text-yellow-400/50 transition-colors tracking-widest uppercase font-bold">
+                        built. by. catnapthegreat. on. github.
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- internal. page. overlays. -->
+        <div id="internal-page" class="hidden absolute inset-0 bg-zinc-950 z-50 flex flex-col p-10 overflow-y-auto">
+            <button onclick="hidePage()" class="absolute top-10 right-10 text-zinc-500 hover:text-white text-2xl">
+                <i class="fas fa-times"></i>
+            </button>
+            <div id="page-content" class="max-w-3xl mx-auto space-y-6">
+                <!-- content. injected. -->
+            </div>
+        </div>
+    </main>
+
+    <audio id="music" loop>
+        <source src="https://files.catbox.moe/36w9r3.wav" type="audio/wav">
+    </audio>
+
+    <script>
+        let tabs = [];
+        let activeTabId = null;
+        const tabsContainer = document.getElementById('tabs-container');
+        const viewport = document.getElementById('browser-viewport');
+        const urlInput = document.getElementById('url-input');
+        const urlForm = document.getElementById('url-form');
+        const homeView = document.getElementById('home-view');
+        const homeSearchForm = document.getElementById('home-search-form');
+        const homeSearchInput = document.getElementById('home-search-input');
+        const loadingBar = document.getElementById('loading-bar');
+        const music = document.getElementById('music');
+        const musicToggle = document.getElementById('music-toggle');
+        const musicIcon = document.getElementById('music-icon');
+        const visualizer = document.getElementById('visualizer');
+        const internalPage = document.getElementById('internal-page');
+        const pageContent = document.getElementById('page-content');
+
+        const pages = {
+            faq: `
+                <h1 class="text-4xl font-bold text-yellow-400">faq. banana.</h1>
+                <div class="space-y-4 text-zinc-300">
+                    <p><strong>q. why. banana.?</strong><br>a. because. it. is. the. most. refreshing. way. to. browse. the. web.</p>
+                    <p><strong>q. is. it. safe.?</strong><br>a. absolutely. your. data. stays. in. your. browser.</p>
+                </div>
+            `,
+            help: `
+                <h1 class="text-4xl font-bold text-green-400">help. banana.</h1>
+                <div class="space-y-6 text-zinc-300">
+                    <div class="p-6 glass rounded-2xl border-yellow-400/20">
+                        <h2 class="text-xl font-bold text-white mb-2">getting. on. every. web.</h2>
+                        <p class="mb-4">if. some. sites. don't. load. it's. because. they. block. frames. to. fix. this.:</p>
+                        <ol class="list-decimal list-inside space-y-2">
+                            <li>open. chrome. web. store.</li>
+                            <li>search. for. "ignore. x-frame. headers".</li>
+                            <li>install. the. extension.</li>
+                            <li>turn. it. on.</li>
+                            <li>now. refresh. banana. and. enjoy. unrestricted. browsing.</li>
+                        </ol>
+                    </div>
+                </div>
+            `,
+            terms: `
+                <h1 class="text-4xl font-bold text-blue-400">terms. banana.</h1>
+                <div class="space-y-4 text-zinc-300">
+                    <p>1. be. nice.</p>
+                    <p>2. use. the. browser. for. good.</p>
+                    <p>3. eat. bananas.</p>
+                </div>
+            `
+        };
+
+        function showPage(key) {
+            pageContent.innerHTML = pages[key];
+            internalPage.classList.remove('hidden');
+        }
+
+        function hidePage() {
+            internalPage.classList.add('hidden');
+        }
+
+        function createNewTab() {
+            const id = Date.now();
+            tabs.push({ id, title: 'new. tab.', url: '' });
+            renderTabs();
+            switchTab(id);
+        }
+
+        function renderTabs() {
+            tabsContainer.innerHTML = '';
+            tabs.forEach(tab => {
+                const tabEl = document.createElement('div');
+                tabEl.className = `flex items-center gap-2 px-4 py-2 rounded-t-xl cursor-pointer min-w-[140px] max-w-[200px] transition-all border-x border-t border-transparent group ${tab.id === activeTabId ? 'tab-active' : 'hover:bg-zinc-800 text-zinc-400'}`;
+                tabEl.onclick = () => switchTab(tab.id);
+                tabEl.innerHTML = `
+                    <img src="https://files.catbox.moe/nu8kzb.png" class="w-3 h-3 object-contain">
+                    <span class="text-xs truncate flex-1 font-medium">${tab.title}</span>
+                    <button onclick="event.stopPropagation(); closeTab(${tab.id})" class="opacity-0 group-hover:opacity-100 hover:bg-zinc-700 p-1 rounded-md transition-all">
+                        <i class="fas fa-times text-[10px]"></i>
+                    </button>
+                `;
+                tabsContainer.appendChild(tabEl);
+            });
+        }
+
+        function switchTab(id) {
+            activeTabId = id;
+            const tab = tabs.find(t => t.id === id);
+            document.querySelectorAll('.browser-iframe').forEach(f => f.classList.add('hidden'));
+            const activeFrame = document.getElementById(`frame-${id}`);
+            hidePage();
+            if (activeFrame && tab.url) {
+                activeFrame.classList.remove('hidden');
+                homeView.classList.add('hidden');
+                urlInput.value = tab.url;
+            } else {
+                homeView.classList.remove('hidden');
+                urlInput.value = '';
+            }
+            renderTabs();
+        }
+
+        function closeTab(id) {
+            tabs = tabs.filter(t => t.id !== id);
+            const frame = document.getElementById(`frame-${id}`);
+            if (frame) frame.remove();
+            if (tabs.length === 0) createNewTab();
+            else if (activeTabId === id) switchTab(tabs[tabs.length - 1].id);
+            else renderTabs();
+        }
+
+        function navigate(url) {
+            if (!url) return;
+            let finalUrl = url.toLowerCase().replace(/\.+$/g, ''); 
+
+            if (!finalUrl.startsWith('http')) {
+                if (finalUrl.includes('.') && !finalUrl.includes(' ')) {
+                    finalUrl = 'https://' + finalUrl;
+                } else {
+                    finalUrl = `https://www.google.com/search?q=${encodeURIComponent(finalUrl)}`;
+                }
+            }
+
+            const currentTab = tabs.find(t => t.id === activeTabId);
+            currentTab.url = finalUrl;
+            currentTab.title = finalUrl.replace(/^https?:\/\/(www\.)?/, '').split('/')[0] + '.';
+            
+            let frame = document.getElementById(`frame-${activeTabId}`);
+            if (!frame) {
+                frame = document.createElement('iframe');
+                frame.id = `frame-${activeTabId}`;
+                frame.className = 'browser-iframe w-full h-full absolute inset-0';
+                viewport.appendChild(frame);
+            }
+            
+            homeView.classList.add('hidden');
+            hidePage();
+            frame.classList.remove('hidden');
+            loadingBar.style.width = '30%';
+            frame.src = finalUrl;
+            urlInput.value = finalUrl + '.';
+            frame.onload = () => {
+                loadingBar.style.width = '100%';
+                setTimeout(() => loadingBar.style.width = '0%', 500);
+            };
+            renderTabs();
+        }
+
+        function goBack() { const f = document.getElementById(`frame-${activeTabId}`); if(f) try { f.contentWindow.history.back(); } catch(e){} }
+        function goForward() { const f = document.getElementById(`frame-${activeTabId}`); if(f) try { f.contentWindow.history.forward(); } catch(e){} }
+        function reloadTab() { const f = document.getElementById(`frame-${activeTabId}`); if(f) f.src = f.src; }
+
+        function downloadBrowser() {
+            const blob = new Blob([document.documentElement.outerHTML], { type: 'text/html' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'banana.browser.html';
+            a.click();
+        }
+
+        urlForm.addEventListener('submit', (e) => { e.preventDefault(); navigate(urlInput.value); });
+        homeSearchForm.addEventListener('submit', (e) => { e.preventDefault(); navigate(homeSearchInput.value); });
+
+        let isPlaying = false;
+        musicToggle.addEventListener('click', () => {
+            if (isPlaying) {
+                music.pause();
+                visualizer.classList.add('hidden');
+                musicIcon.classList.remove('hidden');
+            } else {
+                music.play().catch(console.error);
+                visualizer.classList.remove('hidden');
+                musicIcon.classList.add('hidden');
+            }
+            isPlaying = !isPlaying;
+        });
+
+        window.onload = () => createNewTab();
+    </script>
+</body>
+</html>
